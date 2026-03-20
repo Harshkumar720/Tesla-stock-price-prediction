@@ -26,24 +26,15 @@ This project predicts Tesla (TSLA) stock prices using Deep Learning models such 
 ---
 
 ## 📂 Project Structure
+
+
 TSLA-stock-prediction/
 │
 ├── data/ # Dataset files (CSV, processed data)
 ├── models/ # Saved models (.keras) and scaler (.pkl)
 ├── notebooks/ # Jupyter notebooks (EDA, preprocessing, models)
-├── outputs/plots/ # Graphs and results
-├── streamlit/ # Streamlit app
-├── src/ # Python scripts (optional)
-│
-├── README.md
-├── requirements.txt
-└── .gitignore
-TSLA-stock-prediction/
-│
-├── data/ # Dataset files (CSV, processed data)
-├── models/ # Saved models (.keras) and scaler (.pkl)
-├── notebooks/ # Jupyter notebooks (EDA, preprocessing, models)
-├── outputs/plots/ # Graphs and results
+├── outputs/
+│ └── plots/ # Graphs and results
 ├── streamlit/ # Streamlit app
 ├── src/ # Python scripts (optional)
 │
