@@ -50,7 +50,7 @@ def predict_future(last_value, days):
     price = float(last_value)
 
     for i in range(days):
-        change = np.random.normal(0, 0.005)  # smoother
+        change = np.random.normal(0, 0.005)
         price = price * (1 + change)
         future.append(price)
 
@@ -69,62 +69,71 @@ if st.button("Predict Future Prices"):
 
     last_price = data['Close'].iloc[-1]
     future_prices = predict_future(last_price, days)
+    next_price = future_prices[0][0]
+    change = next_price - last_price
+    percent_change = (change / last_price) * 100
+
+    # ---------------------------
+    # 📅 ADD DATE LOGIC (NEW)
+    # ---------------------------
+    last_date = data.index[-1]
+
+    future_dates = pd.date_range(
+        start=last_date,
+        periods=days + 1,
+        freq='D'
+    )[1:]
 
     # ---------------------------
     # Metrics
     # ---------------------------
     col1, col2, col3 = st.columns(3)
 
-    col1.metric("Last Price", f"{last_price:.2f}")
-    col2.metric("Max Predicted", f"{future_prices.max():.2f}")
-    col3.metric("Min Predicted", f"{future_prices.min():.2f}")
+    col1.metric(
+    "Next Day Prediction",
+    f"₹{next_price:.2f}",
+    f"{change:+.2f} ({percent_change:+.2f}%)"
+    )
+    col2.metric("Max Predicted", f"₹{future_prices.max():.2f}")
+    col3.metric("Min Predicted", f"₹{future_prices.min():.2f}")
 
     # ---------------------------
-    # Table
+    # 📋 Table (UPDATED)
     # ---------------------------
     pred_df = pd.DataFrame({
-        "Day": range(1, days+1),
-        "Predicted Price": future_prices.flatten()
+        "Date": future_dates.strftime("%d %b %Y"),
+        "Predicted Price": [f"₹{p:.2f}" for p in future_prices.flatten()]
     })
 
     st.markdown("### 📋 Predicted Prices")
     st.dataframe(pred_df, width="stretch")
 
     # ---------------------------
-    # Plot (FINAL SMOOTH FIX)
+    # 📊 Plot (UPDATED WITH DATES)
     # ---------------------------
     fig = go.Figure()
 
-    # Take last 20 values
-    recent_data = data['Close'].tail(20).values
-
-    # Smooth the last segment slightly
-    recent_data[-1] = last_price  # ensure perfect connection
-
-    past_x = list(range(-len(recent_data), 0))
+    # Past data with real dates
+    recent_data = data['Close'].tail(20)
 
     fig.add_trace(go.Scatter(
-        x=past_x,
-        y=recent_data,
+        x=recent_data.index,
+        y=recent_data.values,
         mode='lines',
         name='Recent Prices'
     ))
 
-    # Future (continuous)
-    future_values = future_prices.flatten()
-    future_y = [last_price] + list(future_values)
-    future_x = list(range(0, days+1))
-
+    # Future data with real dates
     fig.add_trace(go.Scatter(
-        x=future_x,
-        y=future_y,
+        x=future_dates,
+        y=future_prices.flatten(),
         mode='lines+markers',
         name='Predicted Prices'
     ))
 
     fig.update_layout(
         title="Future Stock Prediction",
-        xaxis_title="Days",
+        xaxis_title="Date",
         yaxis_title="Price",
         template="plotly_dark",
         height=450,
