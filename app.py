@@ -88,7 +88,7 @@ if st.button("Predict Future Prices"):
     })
 
     st.markdown("### 📋 Predicted Prices")
-    st.dataframe(pred_df, use_container_width=True)
+    st.dataframe(pred_df, width="stretch")
 
     # ---------------------------
     # Plot (FINAL SMOOTH FIX)
