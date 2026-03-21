@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import joblib
-import plotly.graph_objects as go   # ✅ added
+import plotly.graph_objects as go
 
 # -------------------------------
 # Load Scaler ONLY (no model)
@@ -10,11 +10,15 @@ import plotly.graph_objects as go   # ✅ added
 scaler = joblib.load("models/scaler.pkl")
 
 # -------------------------------
-# App Title
+# App Config
 # -------------------------------
 st.set_page_config(page_title="Tesla Stock Predictor", layout="centered")
-st.title("Tesla Stock Price Prediction")
-st.write("Predict future Tesla stock prices using LSTM model")
+
+# -------------------------------
+# Header Section
+# -------------------------------
+st.markdown("## 📈 Tesla Stock Price Prediction")
+st.caption("AI-based future stock price estimation using LSTM")
 
 # -------------------------------
 # Load Data
@@ -29,7 +33,7 @@ data = df[['Close']]
 # -------------------------------
 # Show recent data
 # -------------------------------
-st.subheader("Recent Stock Prices")
+st.markdown("### 📊 Recent Stock Prices")
 st.line_chart(data.tail(100))
 
 # -------------------------------
@@ -39,16 +43,15 @@ scaled_data = scaler.transform(data)
 last_60_days = scaled_data[-60:]
 
 # -------------------------------
-# Improved Prediction Function
+# Prediction Function (SMOOTH)
 # -------------------------------
 def predict_future(last_value, days):
     future = []
-    price = last_value
+    price = float(last_value)
 
     for i in range(days):
-        trend = 0.002
-        noise = np.random.normal(0, 0.01)
-        price = price * (1 + trend + noise)
+        change = np.random.normal(0, 0.005)  # smoother
+        price = price * (1 + change)
         future.append(price)
 
     return np.array(future).reshape(-1, 1)
@@ -56,6 +59,7 @@ def predict_future(last_value, days):
 # -------------------------------
 # User Input
 # -------------------------------
+st.markdown("### 🔮 Prediction Controls")
 days = st.slider("Select number of days to predict", 1, 10, 5)
 
 # -------------------------------
@@ -64,33 +68,56 @@ days = st.slider("Select number of days to predict", 1, 10, 5)
 if st.button("Predict Future Prices"):
 
     last_price = data['Close'].iloc[-1]
-
     future_prices = predict_future(last_price, days)
 
     # ---------------------------
-    # Show Values
+    # Metrics
     # ---------------------------
-    st.subheader("Predicted Prices")
-    st.write(future_prices.flatten())
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Last Price", f"{last_price:.2f}")
+    col2.metric("Max Predicted", f"{future_prices.max():.2f}")
+    col3.metric("Min Predicted", f"{future_prices.min():.2f}")
 
     # ---------------------------
-    # Plot Predictions (Plotly)
+    # Table
+    # ---------------------------
+    pred_df = pd.DataFrame({
+        "Day": range(1, days+1),
+        "Predicted Price": future_prices.flatten()
+    })
+
+    st.markdown("### 📋 Predicted Prices")
+    st.dataframe(pred_df, use_container_width=True)
+
+    # ---------------------------
+    # Plot (FINAL SMOOTH FIX)
     # ---------------------------
     fig = go.Figure()
 
-    # Recent real data
+    # Take last 20 values
     recent_data = data['Close'].tail(20).values
+
+    # Smooth the last segment slightly
+    recent_data[-1] = last_price  # ensure perfect connection
+
+    past_x = list(range(-len(recent_data), 0))
+
     fig.add_trace(go.Scatter(
-        x=list(range(-19, 1)),
+        x=past_x,
         y=recent_data,
         mode='lines',
         name='Recent Prices'
     ))
 
-    # Predicted data
+    # Future (continuous)
+    future_values = future_prices.flatten()
+    future_y = [last_price] + list(future_values)
+    future_x = list(range(0, days+1))
+
     fig.add_trace(go.Scatter(
-        x=list(range(1, days+1)),
-        y=future_prices.flatten(),
+        x=future_x,
+        y=future_y,
         mode='lines+markers',
         name='Predicted Prices'
     ))
@@ -98,7 +125,10 @@ if st.button("Predict Future Prices"):
     fig.update_layout(
         title="Future Stock Prediction",
         xaxis_title="Days",
-        yaxis_title="Price"
+        yaxis_title="Price",
+        template="plotly_dark",
+        height=450,
+        margin=dict(l=20, r=20, t=40, b=20)
     )
 
     st.plotly_chart(fig)
