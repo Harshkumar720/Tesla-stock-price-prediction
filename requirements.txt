@@ -7,3 +7,4 @@ streamlit
 yfinance
 plotly
 joblib
+altair==4.2.2
