@@ -24,6 +24,10 @@ st.caption("AI-based prediction using RNN & LSTM")
 # Load Data
 # -------------------------------
 df = pd.read_csv("data/TSLA.csv")
+
+df.columns = df.columns.str.strip().str.replace(',', '')
+
+
 df['Date'] = pd.to_datetime(df['Date'])
 df.set_index('Date', inplace=True)
 
